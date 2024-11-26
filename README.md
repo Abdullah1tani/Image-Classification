@@ -1,5 +1,6 @@
 # Image-Classification
 
+In this project, we ran all our code on Google Colab for faster computation but we organized the files in `.py` formats, you can find the output of the code in `COMP472_Project.ipynb`. 
 
 ## Project Structure
 
