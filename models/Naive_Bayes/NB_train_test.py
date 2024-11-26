@@ -14,15 +14,15 @@ nb_manual = GaussianNaiveBayesManual()
 nb_manual.fit(train_features, train_labels)
 manual_predictions = nb_manual.predict(test_features)
 
-# Save predictions for later evaluation
+# Save predictions for later use
 np.savez('manual_nb_predictions.npz', predictions=manual_predictions)
 print("Manual Gaussian Naive Bayes predictions saved.")
 
 # Initialize, train, and predict with Scikit-Learn's Gaussian Naive Bayes model
-nb_sklearn = GaussianNB()
-nb_sklearn.fit(train_features, train_labels)
-sklearn_predictions = nb_sklearn.predict(test_features)
+gnb = GaussianNB()
+gnb.fit(train_features, train_labels)
+scikit_preds = gnb.predict(test_features)
 
-# Save predictions for later evaluation
-np.savez('sklearn_nb_predictions.npz', predictions=sklearn_predictions)
-print("Scikit-Learn Gaussian Naive Bayes predictions saved.")
+# Save predictions for reuse
+np.savez('scikit_nb_predictions.npz', predictions=scikit_preds)
+print("\nScikit-Learn Gaussian Naive Bayes predictions saved.")

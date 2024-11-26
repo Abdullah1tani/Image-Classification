@@ -1,28 +1,33 @@
-import numpy as np
 import pandas as pd
-from models.evaluation_utils import plot_confusion_matrix, evaluate_model
+import numpy as np
 
-# Load true labels and predictions from both models
+from models.evaluation_utils import evaluate_and_display
+
+# Load training data and fit the manual decision tree model
 data = np.load('../../features/cifar10_features_50d.npz')
 test_labels = data['test_labels']
-manual_predictions = np.load('manual_nb_predictions.npz')['predictions']
-sklearn_predictions = np.load('sklearn_nb_predictions.npz')['predictions']
 
-# Evaluate both models
-accuracy_manual, precision_manual, recall_manual, f1_manual, conf_matrix_manual = evaluate_model("Manual Naive Bayes", test_labels, manual_predictions)
-accuracy_sklearn, precision_sklearn, recall_sklearn, f1_sklearn, conf_matrix_sklearn = evaluate_model("Scikit-Learn Naive Bayes", test_labels, sklearn_predictions)
+# Load predictions and evaluate
+manual_preds = np.load('manual_nb_predictions.npz')['predictions']
+scikit_preds = np.load('scikit_nb_predictions.npz')['predictions']
 
-plot_confusion_matrix(conf_matrix_manual, "Confusion Matrix - Manual Naive Bayes")
-plot_confusion_matrix(conf_matrix_sklearn, "Confusion Matrix - Scikit-Learn Naive Bayes")
+# Evaluate Manual Naive Bayes
+manual_metrics = evaluate_and_display("Manual Naive Bayes", test_labels, manual_preds)
 
-# Display summary table
-results_df = pd.DataFrame({
-    'Model': ['Manual Naive Bayes', 'Scikit-Learn Naive Bayes'],
-    'Accuracy': [accuracy_manual, accuracy_sklearn],
-    'Precision': [precision_manual, precision_sklearn],
-    'Recall': [recall_manual, recall_sklearn],
-    'F1 Score': [f1_manual, f1_sklearn]
+print()
+
+# Evaluate Scikit-Learn Naive Bayes
+scikit_metrics = evaluate_and_display("Scikit-Learn Naive Bayes", test_labels, scikit_preds)
+
+# Summarize findings in a table
+summary_table = pd.DataFrame({
+    "Model": ["Manual Naive Bayes", "Scikit-Learn Naive Bayes"],
+    "Accuracy": [manual_metrics[0], scikit_metrics[0]],
+    "Precision": [manual_metrics[1], scikit_metrics[1]],
+    "Recall": [manual_metrics[2], scikit_metrics[2]],
+    "F1 Score": [manual_metrics[3], scikit_metrics[3]]
 })
-print("\nEvaluation Summary Table:")
-print(results_df)
 
+# Display the summary table
+print("\nSummary Table:")
+print(summary_table)
