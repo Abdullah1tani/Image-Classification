@@ -1,89 +1,144 @@
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, TensorDataset
-import numpy as np
 
-# Load CIFAR-10 feature vectors (from PCA-reduced file with 50 dimensions)
-data = np.load('../../features/cifar10_features_50d.npz')
-train_features, train_labels = data['train_features'], data['train_labels']
-test_features, test_labels = data['test_features'], data['test_labels']
+from models.evaluation_utils import evaluate_and_display
 
-# Convert data to PyTorch tensors
-train_features_tensor = torch.tensor(train_features, dtype=torch.float32)
-train_labels_tensor = torch.tensor(train_labels, dtype=torch.long)
-test_features_tensor = torch.tensor(test_features, dtype=torch.float32)
-test_labels_tensor = torch.tensor(test_labels, dtype=torch.long)
+# Training function for mlp
+def mlp_train(model, train_loader):
+    print(f'Training {model.get_name()}:')
 
-# Define DataLoader for batching
-train_dataset = TensorDataset(train_features_tensor, train_labels_tensor)
-test_dataset = TensorDataset(test_features_tensor, test_labels_tensor)
-train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-test_loader = DataLoader(test_dataset, batch_size=64, shuffle=False)
+    # Loss function to compute the error
+    criterion = nn.CrossEntropyLoss()
 
-# Define the MLP architecture
-class MLP(nn.Module):
-    def __init__(self):
-        super(MLP, self).__init__()
-        self.fc1 = nn.Linear(50, 512)        # Input layer
+    optimizer = optim.SGD(model.parameters(), lr=0.01, momentum=0.9) # set learning rate and momentum
+    epochs = 20  # Number of training epochs
+    for epoch in range(epochs):
+        model.train()
+        total_loss = 0
+        for features, labels in train_loader:
+            optimizer.zero_grad()
+            outputs = model(features)           # compute predictions
+            loss = criterion(outputs, labels)   # measure difference between predictions and true labels
+            loss.backward()
+            optimizer.step()         # update weights
+            total_loss += loss.item()
+        print(f"Epoch [{epoch + 1}/{epochs}], Loss: {total_loss / len(train_loader):.4f}")
+
+    # Save the trained model weights
+    torch.save(model.state_dict(), f'{model.get_name()}_weights.pth')
+    print(f"{model.get_name()} model training complete and weights saved to {model.get_name()}_weights.pth.\n")
+
+# Testing mlp
+def mlp_test(model, test_loader, test_labels, name):
+    model.eval()
+    predictions = []
+    with torch.no_grad():
+        for features, _ in test_loader:
+            outputs = model(features)
+            _, preds = torch.max(outputs, 1)
+            predictions.extend(preds.numpy())
+
+    # print accuracy, precision, recall and f1 score and plot confusion matrix
+    return evaluate_and_display(name , test_labels, predictions)
+
+# the three-layer MLP class contains 3 linear, 2 ReLU and 1 BatchNorm layer
+class ThreeLayerMLP(nn.Module):
+    def __init__(self, input_size, hidden_size1, hidden_size2, output_size, name):
+        super(ThreeLayerMLP, self).__init__()
+        self.name = name
+
+        self.fc1 = nn.Linear(input_size, hidden_size1)
         self.relu1 = nn.ReLU()
-        self.fc2 = nn.Linear(512, 512)       # Hidden layer
-        self.bn2 = nn.BatchNorm1d(512)
+        self.fc2 = nn.Linear(hidden_size1, hidden_size2)
+        self.batch_norm = nn.BatchNorm1d(hidden_size2)
         self.relu2 = nn.ReLU()
-        self.fc3 = nn.Linear(512, 10)        # Output layer
+        self.fc3 = nn.Linear(hidden_size2, output_size)
+
 
     def forward(self, x):
         x = self.fc1(x)
         x = self.relu1(x)
-        x = self.bn2(self.fc2(x))
+        x = self.fc2(x)
+        x = self.batch_norm(x)
         x = self.relu2(x)
         x = self.fc3(x)
         return x
 
-# Initialize the MLP model, loss function, and optimizer
-mlp_model = MLP()
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(mlp_model.parameters(), lr=0.01, momentum=0.9)
+    def get_name(self):
+        return self.name
 
-# Training loop
-epochs = 10  # Number of training epochs
-for epoch in range(epochs):
-    mlp_model.train()
-    total_loss = 0
-    for features, labels in train_loader:
-        optimizer.zero_grad()
-        outputs = mlp_model(features)       # compute predictions
-        loss = criterion(outputs, labels)   # measure difference between predictions and true labels
-        loss.backward()
-        optimizer.step()         # update weights
-        total_loss += loss.item()
-    print(f"Epoch [{epoch + 1}/{epochs}], Loss: {total_loss / len(train_loader):.4f}")
-
-# Save the trained model
-torch.save(mlp_model.state_dict(), 'mlp_model.pth')
-print("MLP model training complete and saved.")
-
-#Experimenting by varying the depth of the network
-
-class MLP_Deeper(nn.Module):
-    def __init__(self):
-        super(MLP_Deeper, self).__init__()
-        self.fc1 = nn.Linear(50, 512)     #example of variation made: self.fc1 = nn.Linear(50, 256)
+# the shallow MLP class contains 2 linear, 1 ReLU and 0 BatchNorm layer
+class ShallowMLP(nn.Module):
+    def __init__(self, input_size=50, hidden_size=512, output_size=10):
+        super(ShallowMLP, self).__init__()
+        self.fc1 = nn.Linear(input_size, hidden_size)
         self.relu1 = nn.ReLU()
-        self.fc2 = nn.Linear(512,512)    #example of variation made: self.fc2 = nn.Linear(256, 256)
-        self.bn2 = nn.BatchNorm1d(512)
-        self.relu2 = nn.ReLU()
-        self.fc3 = nn.Linear(512, 10)   # Additional hidden layer  /  #example of variation made: self.fc3 = nn.Linear(256, 10)
-        self.bn3 = nn.BatchNorm1d(512)
-        self.relu3 = nn.ReLU()
-        self.fc4 = nn.Linear(512, 10)    # Output layer
+        self.fc2 = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
         x = self.fc1(x)
         x = self.relu1(x)
-        x = self.bn2(self.fc2(x))
+        x = self.fc2(x)
+        return x
+
+    def get_name(self):
+        return "shallow_layer_mlp"
+
+# the intermediate MLP class contains 4 linear, 3 ReLU and 1 BatchNorm layer
+class IntermediateMLP(nn.Module):
+    def __init__(self, input_size=50, hidden_size=512, output_size=10):
+        super(IntermediateMLP, self).__init__()
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        self.relu1 = nn.ReLU()
+        self.fc2 = nn.Linear(hidden_size, hidden_size)
+        self.relu2 = nn.ReLU()
+        self.fc3 = nn.Linear(hidden_size, hidden_size)
+        self.batch_norm = nn.BatchNorm1d(hidden_size)
+        self.relu3 = nn.ReLU()
+        self.fc4 = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.relu1(x)
+        x = self.fc2(x)
         x = self.relu2(x)
-        x = self.bn3(self.fc3(x))
+        x = self.fc3(x)
+        x = self.batch_norm(x)
         x = self.relu3(x)
         x = self.fc4(x)
         return x
+
+    def get_name(self):
+        return "intermediate_layer_mlp"
+
+# the Deep MLP class contains 5 linear, 4 ReLU and 1 BatchNorm layer
+class DeepMLP(nn.Module):
+    def __init__(self, input_size=50, hidden_size=512, output_size=10):
+        super(DeepMLP, self).__init__()
+        self.fc1 = nn.Linear(input_size, hidden_size)
+        self.relu1 = nn.ReLU()
+        self.fc2 = nn.Linear(hidden_size, hidden_size)
+        self.relu2 = nn.ReLU()
+        self.fc3 = nn.Linear(hidden_size, hidden_size)
+        self.relu3 = nn.ReLU()
+        self.fc4 = nn.Linear(hidden_size, hidden_size)
+        self.batch_norm = nn.BatchNorm1d(hidden_size)
+        self.relu4 = nn.ReLU()
+        self.fc5 = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x):
+        x = self.fc1(x)
+        x = self.relu1(x)
+        x = self.fc2(x)
+        x = self.relu2(x)
+        x = self.fc3(x)
+        x = self.relu3(x)
+        x = self.fc4(x)
+        x = self.batch_norm(x)
+        x = self.relu4(x)
+        x = self.fc5(x)
+        return x
+
+    def get_name(self):
+        return "deep_layer_mlp"
