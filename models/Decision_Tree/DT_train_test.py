@@ -13,7 +13,7 @@ dt_manual = SimpleDecisionTree(max_depth=50)
 dt_manual.fit(train_features, train_labels)
 manual_predictions = dt_manual.predict(test_features)
 
-# Save manual predictions for evaluation
+# Save predictions
 np.savez('manual_dt_predictions.npz', predictions=manual_predictions)
 print("Manual Decision Tree predictions saved.")
 

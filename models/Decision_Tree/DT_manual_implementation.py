@@ -27,7 +27,7 @@ class SimpleDecisionTree:
         return node
 
     def _best_split(self, dataset):
-        """Determine the best split based on Gini index"""
+        # Determine the best split based on Gini index
         class_values = np.unique(dataset[:, -1])
         best_index, best_threshold, best_score, best_groups = None, None, float('inf'), None
         # Loops through all 50 feature indices except the label index (index 51)
