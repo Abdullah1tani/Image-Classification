@@ -1,6 +1,8 @@
 # Image-Classification
 
-In this project, we ran all our code on Google Colab for faster computation but we organized the files in `.py` formats, you can find the output of the code in `code_output.ipynb`. 
+For this project, we ran all our code on Google Colab for faster computation but we organized the files in `.py` formats, you can find the output of the code in `code_output.ipynb`. 
+
+In addition, we wrote a report for this project `image classification report.pdf`.
 
 ## Project Structure
 
