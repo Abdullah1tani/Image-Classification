@@ -39,7 +39,7 @@ Contains 4 directories and 1 file. each directory contains files related to a mo
 
 ## Installation Guide
 1. Clone the Github repository using this link: https://github.com/Abdullah1tani/Image-Classification.git
-2. Download the models weights and predictions from the releases and unzip it.
+2. Download the models weights and predictions from the releases section and unzip it.
 3. Add every model's weight to its specific directory.
 
 Note: Do not add an extra directory when adding the files, you need to remove the files from the directory from the zip file and add them to the specific directory. For example, when adding the file `features_extraction_50d.npz` to the project, you need to have the path to the file like this `features/features_extraction_50d.npz` and not `features/extracted_features/features_extraction_50d.npz`. You need to do that for all `.pth` and `.npz` files.
