@@ -4,6 +4,10 @@ For this project, we ran all our code on Google Colab for faster computation but
 
 In addition, we wrote a report for this project `image classification report.pdf`.
 
+## Contributors
+- Abdullah1tani: https://github.com/Abdullah1tani
+- hadiwehbi10: https://github.com/hadiwehbi10
+
 ## Project Structure
 
 ### `features` directory: 
